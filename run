@@ -1,0 +1,56 @@
+mkdir -p ~/acurast-node/chain-specs ~/acurast-node/data
+cd ~/acurast-node
+
+wget https://raw.githubusercontent.com/Acurast/acurast-substrate/acurast-v0.13.3a/chain-specs/acurast-kusama-parachain-2239-raw.json -P chain-specs
+
+
+
+sudo apt update && sudo apt install -y pkg-config libssl-dev build-essential clang cmake
+
+rustup install 1.68.2
+rustup default 1.68.2
+
+cargo install --force --git https://github.com/paritytech/substrate subkey --tag v3.0.0 --locked
+
+
+sudo chown -R 1000:1000 ~/acurast-node
+
+nano docker-compose.yml
+
+
+version: '3.8'
+
+services:
+  node-1:
+    image: acurast/node-canary:acurast-v0.16.0
+    container_name: acurast-node-node-1
+    command: >
+      --chain /node/chain-specs/acurast-kusama-parachain-2239-raw.json
+      --base-path /node/data
+      --bootnodes /ip4/82.220.38.222/tcp/30334/ws/p2p/12D3KooWKrSDeVQ4tVQ1eGjqVAhAW3cgMQFHNCBbJrpmupEvdD4A
+      --port 30334
+      --rpc-port 9934
+      --rpc-external
+      --rpc-methods unsafe
+      --rpc-cors all
+      --database rocksdb
+      --pruning archive
+      --collator
+    volumes:
+      - ./data:/node/data
+      - ./chain-specs:/node/chain-specs
+    ports:
+      - "30334:30334"
+      - "9934:9934"
+
+
+docker-compose up -d
+
+
+subkey generate
+
+
+docker compose down
+docker compose up -d
+
+docker-compose logs -f
